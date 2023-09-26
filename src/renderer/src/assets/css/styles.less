@@ -1,0 +1,80 @@
+body {
+  color: var(--white);
+  background-color: var(--bg);
+  font-size: 12px;
+}
+
+:root {
+  --primary: #B14DFF;
+  --secondary: #77C5FF;
+  --success: #1AEF30;
+  --fail: #D63131;
+  --dark: #333333;
+  --bg: #222222;
+  --white: #ffffff;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--dark); /* Цвет ползунка */
+  border-radius: 5px; /* Закругление углов ползунка */
+  opacity: 0.5;
+}
+
+/* Стилизация контейнера скроллбара */
+::-webkit-scrollbar {
+  width: 5px; 
+  background-color: var(--bg); /* Цвет контейнера */
+}
+
+
+* {
+  padding: 0;
+  margin: 0;
+  font-weight: normal;
+  font-family:
+    'Urbanist',  
+    'Inter',
+    'Ubuntu',
+    Roboto,
+    'Helvetica Neue',
+    'Segoe UI',
+    'Oxygen',
+    'Cantarell',
+    'Open Sans',
+    sans-serif;
+}
+
+
+ul {
+  list-style: none;
+}
+
+code {
+  font-weight: 600;
+  padding: 3px 5px;
+  border-radius: 2px;
+  background-color: #26282e;
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    SF Mono,
+    Menlo,
+    Consolas,
+    Liberation Mono,
+    monospace;
+  font-size: 85%;
+}
+
+a {
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  outline: none;
+  display: inline-block;
+}
+
+#app {
+  margin: 20px auto;
+  width: 250px;
+}
