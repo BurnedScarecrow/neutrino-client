@@ -1,22 +1,40 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import NewServerButton from '../components/NewServerButton.vue'
-import ServerListItem from '../components/ServerListItem.vue'
+import { onMounted, ref } from 'vue';
+import NewServerButton from '../components/NewServerButton.vue';
+import ServerListItem from '../components/ServerListItem.vue';
 
-const servers = ref([...window.api.getServers()])
-const addServer = (name, ip) => {
-  console.log('added')
-  window.api.addServer(name, ip)
-  servers.value = [...window.api.getServers()] // Обновляем массив servers после добавления сервера
+const serverList = ref({})
+
+onMounted(() => {
+  window.api.on('servers:update:ans', (_, data) => {
+    console.log('vue: update-list')
+    console.log(data)
+
+    serverList.value = data
+  })
+
+  window.api.getServers()
+})
+
+function addServer() {
+  const newName = 'Новый сервер'
+  const newConfig = { ip: 'value1' }
+  console.log("vue: emit event with data")
+  window.api.addServer({ name: newName, config: newConfig })
 }
 </script>
 
 <template>
   <div class="server-list">
-    <RouterLink to="/new-server">
-      <NewServerButton @click="addServer('name', 'ip')"></NewServerButton>
-    </RouterLink>
-    <ServerListItem v-for="item in servers" :key="item.id" :title="item.name"></ServerListItem>
+    <!-- <RouterLink to="/new-server"> -->
+    <NewServerButton @click="addServer()"></NewServerButton>
+    <!-- </RouterLink> -->
+    <!-- {{ serverList }} -->
+    <ServerListItem 
+      v-for="(item, name) of serverList"
+      :key="name"
+      :title="name"
+      >{}</ServerListItem>
   </div>
 </template>
 

@@ -1,27 +1,22 @@
 import { electronAPI } from '@electron-toolkit/preload'
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 
-const serverList = [
-  {
-    name: 'Neutrino server 1',
-    ip: '123.22.44.19',
-    id: 0
-  },
-  {
-    name: 'Server 2',
-    ip: '123.22.44.19',
-    id: 1
-  }
-]
+function getServers() {
+  console.log('[preload] -> servers:list')
+  ipcRenderer.send('servers:list')
+}
 
-const addServer = (ip: string, name: string) => {
-  serverList.push({ id: serverList[serverList.length - 1].id, ip, name })
-  console.log('added')
+function addServer(data) {
+  console.log('vue: emit event with data')
+  ipcRenderer.send('servers:add', data)
 }
 
 // Custom APIs for renderer
 const api = {
-  getServers: () => serverList,
+  getServers,
+  on: (channel, listener) => {
+    ipcRenderer.on(channel, (event, ...args) => listener(event, ...args))
+  },
   addServer
 }
 
@@ -29,6 +24,15 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld('ipcRenderer', {
+      send: (channel, data) => {
+        ipcRenderer.send(channel, data)
+      },
+      on: (channel, func) => {
+        // Deliberately strip event as it includes `sender`
+        ipcRenderer.on(channel, (_, ...args) => func(...args))
+      }
+    })
   } catch (error) {
     console.error(error)
   }

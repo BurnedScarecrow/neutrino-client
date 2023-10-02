@@ -1,17 +1,14 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-
-export type ServerItem = {
-  id: number
-  name: string
-  config: object
-}
+import { ServerItem } from '../main/store'
 
 declare global {
   interface Window {
     electron: ElectronAPI
     api: {
-      getServers: () => ServerItem[]
-      addServer: (string, string) => void
+      getServers: () => { [name: string]: ServerItem }
+      on: any
+      addServer: (any) => void
     }
+    ipcRenderer: any
   }
 }
