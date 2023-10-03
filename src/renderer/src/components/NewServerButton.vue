@@ -1,10 +1,9 @@
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <div class="dark-button">
     <span>Add new server</span>
-    <img src="../assets/icons/add-square.svg">
+    <img src="../assets/icons/add-square.svg" />
   </div>
 </template>
 

@@ -1,14 +1,26 @@
 <script setup lang="ts">
-import ServerButton from './ServerButton.vue';
-defineProps({ title: String })
+import ServerButton from './ServerButton.vue'
+
+const emit = defineEmits(['showModal'])
+const props = defineProps({ title: String })
+
+function showModal() {
+  console.log('Delete', props.title)
+  emit('showModal', props.title)
+}
+
+function deleteServer() {
+  console.log('Delete', props.title)
+  showModal()
+}
 </script>
 
 <template>
   <div class="server-list-item">
     <ServerButton :title="title"></ServerButton>
     <div class="delete-button">
-      <a href="">
-        <img src="../assets/icons/delete-icon.svg" >
+      <a @click="deleteServer">
+        <img src="../assets/icons/delete-icon.svg" />
       </a>
     </div>
   </div>

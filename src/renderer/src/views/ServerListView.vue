@@ -1,15 +1,33 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import NewServerButton from '../components/NewServerButton.vue';
-import ServerListItem from '../components/ServerListItem.vue';
+import { onMounted, ref } from 'vue'
+import NewServerButton from '../components/NewServerButton.vue'
+import ServerListItem from '../components/ServerListItem.vue'
+import Modal from '../components/Modal.vue'
 
 const serverList = ref({})
+const isModalVisible = ref(false)
+const serverName = ref('')
+
+function showModal(name: string) {
+  isModalVisible.value = true
+  serverName.value = name
+}
+function closeModal() {
+  isModalVisible.value = false
+  setTimeout(() => {
+    serverName.value = ''
+  }, 300)
+}
+function deleteServer(data) {
+  console.log('deleteServer', data.name)
+  closeModal()
+  window.api.deleteServer({ name: data.name })
+}
 
 onMounted(() => {
-  window.api.on('servers:update:ans', (_, data) => {
+  window.ipcRenderer.on('servers:update:ans', (_, data) => {
     console.log('vue: update-list')
     console.log(data)
-
     serverList.value = data
   })
 
@@ -19,22 +37,29 @@ onMounted(() => {
 function addServer() {
   const newName = 'Новый сервер'
   const newConfig = { ip: 'value1' }
-  console.log("vue: emit event with data")
   window.api.addServer({ name: newName, config: newConfig })
 }
 </script>
 
 <template>
+  <Modal
+    v-show="isModalVisible"
+    :name="serverName"
+    @close="closeModal"
+    @approve="deleteServer($event)"
+  />
   <div class="server-list">
-    <!-- <RouterLink to="/new-server"> -->
-    <NewServerButton @click="addServer()"></NewServerButton>
-    <!-- </RouterLink> -->
+    <RouterLink to="/new-server">
+      <NewServerButton @click="addServer"></NewServerButton>
+    </RouterLink>
     <!-- {{ serverList }} -->
-    <ServerListItem 
-      v-for="(item, name) of serverList"
+    <ServerListItem
+      v-for="(_, name) of serverList"
       :key="name"
       :title="name"
-      >{}</ServerListItem>
+      @showModal="showModal($event)"
+      >{}</ServerListItem
+    >
   </div>
 </template>
 

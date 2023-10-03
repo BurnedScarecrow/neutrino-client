@@ -70,11 +70,19 @@ app.whenReady().then(() => {
     event.sender.send('servers:update:ans', result)
   })
 
+  ipcMain.on('servers:delete', (event, data) => {
+    console.log('ipcMain: on servers:delete event handler got data', JSON.stringify(data))
+    store.delete(data.name)
+    const result = listServers()
+    console.log('result:', result)
+    event.sender.send('servers:update:ans', result)
+  })
+
   function listServers() {
     const list = {}
     const allKeys = store.store
     for (const key in allKeys) {
-      const value = store.get(key) as any
+      const value = store.get(key)
       list[key] = value
     }
     return list

@@ -6,9 +6,12 @@ declare global {
     electron: ElectronAPI
     api: {
       getServers: () => { [name: string]: ServerItem }
-      on: any
       addServer: (any) => void
+      deleteServer: (any) => void
     }
-    ipcRenderer: any
+    ipcRenderer: {
+      on
+      send
+    }
   }
 }

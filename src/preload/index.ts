@@ -7,17 +7,20 @@ function getServers() {
 }
 
 function addServer(data) {
-  console.log('vue: emit event with data')
+  console.log('[preload]: add server')
   ipcRenderer.send('servers:add', data)
+}
+
+function deleteServer(data) {
+  console.log('[preload]: delete server')
+  ipcRenderer.send('servers:delete', data)
 }
 
 // Custom APIs for renderer
 const api = {
   getServers,
-  on: (channel, listener) => {
-    ipcRenderer.on(channel, (event, ...args) => listener(event, ...args))
-  },
-  addServer
+  addServer,
+  deleteServer
 }
 
 if (process.contextIsolated) {
@@ -28,9 +31,8 @@ if (process.contextIsolated) {
       send: (channel, data) => {
         ipcRenderer.send(channel, data)
       },
-      on: (channel, func) => {
-        // Deliberately strip event as it includes `sender`
-        ipcRenderer.on(channel, (_, ...args) => func(...args))
+      on: (channel, listener) => {
+        ipcRenderer.on(channel, (event, ...args) => listener(event, ...args))
       }
     })
   } catch (error) {
