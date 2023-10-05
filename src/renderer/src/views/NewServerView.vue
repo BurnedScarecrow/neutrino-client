@@ -1,13 +1,105 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const name = ref('')
-const settings = ref({
+const config = ref({
   server: '',
   server_port: '',
   method: '',
   password: ''
 })
+
+document.addEventListener('keydown', function (event) {
+  if (event.key === 'Enter' && event.ctrlKey) {
+    event.preventDefault()
+    save()
+  }
+})
+
+const errorServerExists = ref(false)
+const errorEmptyTitle = ref(false)
+const errorIP = ref(false)
+const errorInvalidPort = ref(false)
+const errorNoMethod = ref(false)
+const errorNoPassword = ref(false)
+
+function isValidIPv4Address(ipAddress) {
+  const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/
+  return ipv4Regex.test(ipAddress)
+}
+
+function checkFields() {
+  name.value = name.value.trim()
+  config.value.server = config.value.server.trim()
+  config.value.server_port = config.value.server_port.trim()
+  config.value.password = config.value.password.trim()
+  config.value.method = config.value.method.trim()
+
+  const portNumber = Number.parseInt(config.value.server_port)
+
+  if (name.value === '') {
+    errorEmptyTitle.value = true
+    return false
+  } else {
+    errorEmptyTitle.value = false
+  }
+
+  const response = window.api.getServer(name.value)
+
+  if (response) {
+    errorServerExists.value = true
+    return false
+  } else {
+    errorServerExists.value = false
+  }
+
+  if (config.value.server === '' || !isValidIPv4Address(config.value.server)) {
+    errorIP.value = true
+    return false
+  } else {
+    errorIP.value = false
+  }
+
+  if (config.value.server_port === '' || portNumber < 0 || portNumber > 65535) {
+    errorInvalidPort.value = true
+    return false
+  } else {
+    errorInvalidPort.value = false
+  }
+
+  if (config.value.method === '') {
+    errorNoMethod.value = true
+    return false
+  } else {
+    errorNoMethod.value = false
+  }
+
+  if (config.value.password === '') {
+    errorNoPassword.value = true
+    return false
+  } else {
+    errorNoPassword.value = false
+  }
+
+  return true
+}
+
+function save() {
+  if (!checkFields()) return
+
+  const data = {
+    name: name.value,
+    config: config.value
+  }
+  console.log('[vue]-> add server')
+  const result = window.api.addServer(JSON.stringify(data))
+  console.log(result)
+
+  if (result) router.push('/')
+}
 </script>
 
 <template>
@@ -15,7 +107,7 @@ const settings = ref({
     <nav>
       <router-link class="round-button" to="/"><img src="../assets/icons/back.svg" /></router-link>
       New proxy settings
-      <div class="apply-button" to="/">
+      <div class="apply-button" @click="save">
         <div class="apply_btn_inner"></div>
         <div class="apply_btn_inner"></div>
         <div class="apply_btn_inner"></div>
@@ -37,18 +129,29 @@ const settings = ref({
     </div>
 
     <div class="socket-row">
-      <input v-model="settings.server" type="text" placeholder="IP address" />
-
-      <input v-model="settings.server_port" type="text" placeholder="Port" />
+      <input v-model="config.server" type="text" placeholder="IP address" />
+      <input v-model="config.server_port" type="text" placeholder="Port" />
     </div>
-    <input v-model="settings.method" type="text" placeholder="Encription" />
 
-    <input v-model="settings.password" type="password" placeholder="Password" />
+    <select v-model="config.method" placeholder="Encription">
+      <option value="" disabled selected>Encryption method</option>
+      <option value="rc4-md5">rc4-md5</option>
+      <option value="aes-128-gcm">aes-128-gcm</option>
+      <option value="aes-192-gcm">aes-192-gcm</option>
+      <option value="aes-256-gcm">aes-256-gcm</option>
+      <option value="aes-256-cfb">aes-256-cfb</option>
+      <option value="chacha20-ietf-poly1305">chacha20-ietf-poly1305</option>
+    </select>
 
-    <div class="tabs-row">
-      <div class="btn active">TCP</div>
-      <div class="btn">TCP & UDP</div>
-      <div class="btn">UDP</div>
+    <input v-model="config.password" type="password" placeholder="Password" />
+
+    <div class="err-row">
+      <div v-if="errorEmptyTitle" class="error">Title is empty</div>
+      <div v-if="errorIP" class="error">IP address is not valid</div>
+      <div v-if="errorServerExists" class="error">Server with this title exists</div>
+      <div v-if="errorInvalidPort" class="error">Port is not valid</div>
+      <div v-if="errorNoMethod" class="error">Choose encryption method</div>
+      <div v-if="errorNoPassword" class="error">Enter password</div>
     </div>
   </div>
 </template>
@@ -61,6 +164,27 @@ const settings = ref({
   display: flex;
   justify-content: center;
   gap: 15px;
+}
+
+.err-row {
+  width: 100%;
+  flex-wrap: wrap;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  position: fixed;
+  bottom: 20px;
+  left: 0;
+  box-sizing: border-box;
+  padding: 0 10px;
+}
+
+.error {
+  background-color: var(--fail);
+  padding: 5px 10px;
+  border-radius: 10px;
+  height: 23px;
+  box-sizing: border-box;
 }
 
 .socket-row {
@@ -93,14 +217,16 @@ const settings = ref({
 }
 
 .apply-button {
-  width: 20px;
-  height: 20px;
+  width: 25px;
+  height: 25px;
   background: var(--dark);
   position: relative;
   justify-content: center;
   align-items: center;
   transition: all 0.2s ease-in-put;
   box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.3);
+  border: 0;
+  outline: 0;
 
   .apply_btn_inner {
     position: absolute;
@@ -157,17 +283,5 @@ const settings = ref({
     align-items: center;
     justify-content: space-between;
   }
-}
-
-input {
-  background: var(--dark);
-  border: 0;
-  height: 25px;
-  border-radius: 10px;
-  outline: none;
-  color: var(--white);
-  padding: 2px 10px;
-  box-sizing: border-box;
-  text-align: center;
 }
 </style>

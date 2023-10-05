@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import ServerButton from './ServerButton.vue'
 
-const emit = defineEmits(['showModal'])
+const emit = defineEmits(['show-modal'])
 const props = defineProps({ title: String })
 
 function showModal() {
   console.log('Delete', props.title)
-  emit('showModal', props.title)
+  emit('show-modal', props.title)
 }
 
 function deleteServer() {

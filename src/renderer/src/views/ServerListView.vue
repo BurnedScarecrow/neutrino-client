@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import Modal from '../components/Modal.vue'
 import NewServerButton from '../components/NewServerButton.vue'
 import ServerListItem from '../components/ServerListItem.vue'
-import Modal from '../components/Modal.vue'
 
 const serverList = ref({})
 const isModalVisible = ref(false)
@@ -24,21 +24,17 @@ function deleteServer(data) {
   window.api.deleteServer({ name: data.name })
 }
 
+const updateServersHandler = (_, data) => {
+  console.log('vue: update-list')
+  console.log(data)
+  serverList.value = data
+}
+
 onMounted(() => {
-  window.ipcRenderer.on('servers:update:ans', (_, data) => {
-    console.log('vue: update-list')
-    console.log(data)
-    serverList.value = data
-  })
+  window.ipcRenderer.on('servers:update:ans', updateServersHandler)
 
   window.api.getServers()
 })
-
-function addServer() {
-  const newName = 'Новый сервер'
-  const newConfig = { ip: 'value1' }
-  window.api.addServer({ name: newName, config: newConfig })
-}
 </script>
 
 <template>
@@ -50,14 +46,14 @@ function addServer() {
   />
   <div class="server-list">
     <RouterLink to="/new-server">
-      <NewServerButton @click="addServer"></NewServerButton>
+      <NewServerButton></NewServerButton>
     </RouterLink>
-    <!-- {{ serverList }} -->
+
     <ServerListItem
       v-for="(_, name) of serverList"
       :key="name"
       :title="name"
-      @showModal="showModal($event)"
+      @show-modal="showModal($event)"
       >{}</ServerListItem
     >
   </div>

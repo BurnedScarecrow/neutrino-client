@@ -58,23 +58,34 @@ app.whenReady().then(() => {
 
   ipcMain.on('servers:add', (event, newItem) => {
     console.log('ipcMain: on servers:add event handler got data', JSON.stringify(newItem))
-    store.set(newItem.name, newItem.config)
-    const result = listServers()
+
+    const server = JSON.parse(newItem)
+
+    store.set(server?.name, server?.config)
+    const result = store.get(server?.name)
     console.log('result:', result)
-    event.sender.send('servers:update:ans', result)
+    event.returnValue = result
   })
 
   ipcMain.on('servers:list', (event) => {
+    console.log('[ipcMain]-> servers:list catched')
     const result = listServers()
     console.log('result:', result)
     event.sender.send('servers:update:ans', result)
   })
 
+  ipcMain.on('servers:findOne', (event, name) => {
+    console.log('[ipcMain] -> servers:findOne catched')
+    const result = store.get(name)
+    console.log('[ipcMain]-> result:', result)
+    event.returnValue = result
+  })
+
   ipcMain.on('servers:delete', (event, data) => {
-    console.log('ipcMain: on servers:delete event handler got data', JSON.stringify(data))
+    console.log('ipcMain: servers:delete catched. Data:', JSON.stringify(data))
     store.delete(data.name)
     const result = listServers()
-    console.log('result:', result)
+    console.log('[ipcMain]-> result:', result)
     event.sender.send('servers:update:ans', result)
   })
 
