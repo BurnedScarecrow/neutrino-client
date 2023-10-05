@@ -50,12 +50,12 @@ onMounted(() => {
     </RouterLink>
 
     <ServerListItem
-      v-for="(_, name) of serverList"
+      v-for="(config, name) of serverList"
       :key="name"
       :title="name"
+      :config="config"
       @show-modal="showModal($event)"
-      >{}</ServerListItem
-    >
+    ></ServerListItem>
   </div>
 </template>
 

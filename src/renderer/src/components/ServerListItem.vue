@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import ServerButton from './ServerButton.vue'
 
+const router = useRouter()
+
 const emit = defineEmits(['show-modal'])
-const props = defineProps({ title: String })
+const props = defineProps(['title', 'config'])
 
 function showModal() {
   console.log('Delete', props.title)
@@ -13,11 +16,16 @@ function deleteServer() {
   console.log('Delete', props.title)
   showModal()
 }
+
+function choose() {
+  console.log(props.config?.server)
+  router.push(`new-server`) // connection view
+}
 </script>
 
 <template>
   <div class="server-list-item">
-    <ServerButton :title="title"></ServerButton>
+    <ServerButton :title="title" @click="choose()"></ServerButton>
     <div class="delete-button">
       <a @click="deleteServer">
         <img src="../assets/icons/delete-icon.svg" />
