@@ -19,7 +19,7 @@ function deleteServer() {
 
 function choose() {
   console.log(props.config?.server)
-  router.push(`connect`)
+  router.push({ name: `connect`, query: { name: props.title } })
 }
 </script>
 

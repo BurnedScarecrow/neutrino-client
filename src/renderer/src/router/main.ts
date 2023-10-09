@@ -6,7 +6,7 @@ import { createWebHashHistory, createRouter } from 'vue-router'
 const routes = [
   { path: '/', component: ServerList },
   { path: '/new-server', component: NewServer },
-  { path: '/connect', component: Connection }
+  { path: '/connect', component: Connection, name: 'connect' }
 ]
 
 const router = createRouter({
