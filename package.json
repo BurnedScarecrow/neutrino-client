@@ -5,6 +5,8 @@
   "main": "./out/main/index.js",
   "author": "evsikov.pro",
   "homepage": "https://www.electronjs.org",
+  "module": "commonjs",
+  "moduleResolution": "node",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --fix",

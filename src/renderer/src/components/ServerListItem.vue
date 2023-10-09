@@ -19,7 +19,7 @@ function deleteServer() {
 
 function choose() {
   console.log(props.config?.server)
-  router.push(`new-server`) // connection view
+  router.push(`connect`)
 }
 </script>
 

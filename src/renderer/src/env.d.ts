@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+import '../preload/index.d.ts'
 
 declare module '*.vue' {
   import type { DefineComponent } from 'vue'
