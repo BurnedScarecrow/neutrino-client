@@ -10,11 +10,11 @@ declare global {
       deleteServer: (any) => void
       connect: (any) => any
       disconnect: () => any
+      isPortReady: (any) => any
     }
     ipcRenderer: {
       on
       send
-      // off
     }
   }
 }

@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 const connected = ref(false)
 const errorMessage = ref('')
+
+const logs = ref('')
+const errors = ref('')
 
 const route = useRoute()
 console.log(route.query)
@@ -11,10 +14,35 @@ console.log(route.query)
 const name = ref(route.query.name)
 const local_port = ref('1080')
 
+const printErrors = (_, str) => {
+  console.log('GOT ERR', str)
+  errors.value += String.fromCharCode.apply(null, str)
+  errors.value += '\n'
+}
+
+const printLogs = (_, str) => {
+  console.log('GOT LOGS', str)
+  logs.value += String.fromCharCode.apply(null, str)
+  logs.value += '\n'
+}
+
+onMounted(() => {
+  console.log('mounted')
+  window.ipcRenderer.on('connection:error', printErrors)
+  window.ipcRenderer.on('connection:log', printLogs)
+})
+
 function connect() {
   if (connected.value === true) {
     window.api.disconnect()
+    logs.value = ''
+    errors.value = ''
   } else {
+    const portReady = window.api.isPortReady(local_port.value)
+    if (!portReady) {
+      errorMessage.value = 'Port is not ready'
+      return
+    }
     const config = window.api.getServer(name.value)
     config.local_port = local_port.value
     config.timeout = 10
@@ -106,15 +134,31 @@ function connect() {
         <input v-model="local_port" :disabled="connected" type="text" placeholder="Port" />
       </div>
       <div class="divider" :class="{ hidden: !connected }"></div>
-      <div class="error" :class="{ hidden: errorMessage === '' }">
+      <div class="error" v-if="errorMessage != ''">
         {{ errorMessage }}
       </div>
     </footer>
+    <section class="logWingow" v-show="connected">
+      {{ logs }}
+    </section>
+    <section class="logWingow" v-show="connected">
+      {{ errors }}
+    </section>
   </div>
 </template>
 
 <style lang="less">
 @import '../assets/css/styles.less';
+
+.logWingow {
+  width: 250px;
+  overflow: auto;
+  height: 45px;
+  background: var(--dark);
+  font-family: 'Courier New';
+  font-size: 9px;
+  padding: 3px;
+}
 
 .error {
   display: flex;
@@ -124,11 +168,11 @@ function connect() {
 .connection {
   display: grid;
   gap: 10px;
-  grid-template-rows: 30px 230px 80px; //total 340
+  grid-template-rows: 30px 230px auto; //total 340
   transition: all linear 0.2s;
 
   &.active {
-    grid-template-rows: 30px 100px 80px;
+    grid-template-rows: 30px auto auto;
   }
 }
 

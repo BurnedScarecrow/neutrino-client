@@ -21,6 +21,13 @@ function deleteServer(data) {
   ipcRenderer.send('servers:delete', data)
 }
 
+function isPortReady(data) {
+  console.log('[preload] -> is port ready?')
+  const result = ipcRenderer.sendSync('connection:check_port', data)
+  console.log('[preload] -> port is ready', result)
+  return result
+}
+
 function connect(data) {
   console.log('[preload] -> connect to server')
   const result = ipcRenderer.sendSync('servers:connect', data)
@@ -40,7 +47,8 @@ const api = {
   addServer,
   deleteServer,
   connect,
-  disconnect
+  disconnect,
+  isPortReady
 }
 
 if (process.contextIsolated) {
