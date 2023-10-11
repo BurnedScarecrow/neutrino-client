@@ -8,6 +8,8 @@ declare global {
       getServer: (string) => any
       addServer: (any) => any
       deleteServer: (any) => void
+      connect: (any) => any
+      disconnect: () => any
     }
     ipcRenderer: {
       on

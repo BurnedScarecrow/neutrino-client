@@ -21,12 +21,26 @@ function deleteServer(data) {
   ipcRenderer.send('servers:delete', data)
 }
 
+function connect(data) {
+  console.log('[preload] -> connect to server')
+  const result = ipcRenderer.sendSync('servers:connect', data)
+  console.log('[preload] -> respond', result)
+  return result
+}
+
+function disconnect() {
+  console.log('[preload] -> disconnect from server')
+  ipcRenderer.send('servers:disconnect')
+}
+
 // Custom APIs for renderer
 const api = {
   getServers,
   getServer,
   addServer,
-  deleteServer
+  deleteServer,
+  connect,
+  disconnect
 }
 
 if (process.contextIsolated) {
@@ -40,9 +54,6 @@ if (process.contextIsolated) {
       on: (channel, listener) => {
         ipcRenderer.on(channel, (event, ...args) => listener(event, ...args))
       }
-      // off: (channel, listener) => {
-      //   ipcRenderer.//off(channel, (event, ...args) => listener(event, ...args))
-      // }
     })
   } catch (error) {
     console.error(error)

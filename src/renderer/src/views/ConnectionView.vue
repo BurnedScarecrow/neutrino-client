@@ -3,20 +3,30 @@ import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 const connected = ref(false)
+const errorMessage = ref('')
 
 const route = useRoute()
 console.log(route.query)
 
 const name = ref(route.query.name)
-const config = ref({
-  server: '',
-  server_port: '',
-  local_port: '1080',
-  method: '',
-  password: ''
-})
+const local_port = ref('1080')
 
 function connect() {
+  if (connected.value === true) {
+    window.api.disconnect()
+  } else {
+    const config = window.api.getServer(name.value)
+    config.local_port = local_port.value
+    config.timeout = 10
+
+    const result = window.api.connect(JSON.stringify(config))
+
+    if (result instanceof Error) {
+      errorMessage.value = result.message
+      return
+    }
+    errorMessage.value = ''
+  }
   connected.value = !connected.value
 }
 </script>
@@ -93,9 +103,12 @@ function connect() {
       <div class="row">
         <span v-if="!connected">Local listenning port</span>
         <input v-else type="text" disabled placeholder="localhost" value="localhost" />
-        <input v-model="config.local_port" :disabled="connected" type="text" placeholder="Port" />
+        <input v-model="local_port" :disabled="connected" type="text" placeholder="Port" />
       </div>
       <div class="divider" :class="{ hidden: !connected }"></div>
+      <div class="error" :class="{ hidden: errorMessage === '' }">
+        {{ errorMessage }}
+      </div>
     </footer>
   </div>
 </template>
@@ -103,14 +116,19 @@ function connect() {
 <style lang="less">
 @import '../assets/css/styles.less';
 
+.error {
+  display: flex;
+  justify-content: center;
+}
+
 .connection {
   display: grid;
   gap: 10px;
-  grid-template-rows: 30px 250px 60px; //total 340
+  grid-template-rows: 30px 230px 80px; //total 340
   transition: all linear 0.2s;
 
   &.active {
-    grid-template-rows: 30px 100px 60px;
+    grid-template-rows: 30px 100px 80px;
   }
 }
 
@@ -186,6 +204,7 @@ nav {
 .hidden {
   transition: 0.2s linear;
   opacity: 0;
+  height: 0;
   cursor: default;
 }
 

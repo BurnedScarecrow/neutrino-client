@@ -1,8 +1,10 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
+import { BrowserWindow, app, ipcMain, shell } from 'electron'
 import Store from 'electron-store'
+import { existsSync, mkdirSync, writeFileSync } from 'fs'
+import { homedir } from 'os'
+import { dirname, join } from 'path'
+import icon from '../../resources/icon.png?asset'
 
 const store = new Store()
 
@@ -89,6 +91,21 @@ app.whenReady().then(() => {
     event.sender.send('servers:update:ans', result)
   })
 
+  ipcMain.on('servers:connect', (event, data) => {
+    console.log('ipcMain: servers:connect catched. Data:', JSON.stringify(data))
+    try {
+      connect(data)
+      event.returnValue = 'OK'
+    } catch (err) {
+      console.log(err)
+      event.returnValue = err
+    }
+  })
+
+  ipcMain.on('servers:disconnect', () => {
+    console.log('ipcMain: servers:disconnect catched. Data:')
+  })
+
   function listServers() {
     const list = {}
     const allKeys = store.store
@@ -106,4 +123,42 @@ app.on('window-all-closed', () => {
   }
 })
 
-/* -------------------------------------------------------------------------- */
+function connect(config) {
+  // throw Error('Failed to save config file.')
+  const saved = createConfigFile(config)
+  if (!saved) {
+    throw Error('Failed to save config file.')
+  }
+  // const ss_local = spawn('ss-local', ['-lh', '/usr'])
+
+  // ss_local.stdout.on('data', (data) => {
+  //   console.log(`stdout: ${data}`)
+  // })
+
+  // ss_local.stderr.on('data', (data) => {
+  //   console.error(`stderr: ${data}`)
+  // })
+
+  // ss_local.on('close', (code) => {
+  //   console.log(`child process exited with code ${code}`)
+  // })
+}
+
+function createConfigFile(config): boolean {
+  const homeDirectory = homedir()
+  const filePath = join(homeDirectory, '.config/ss/neutrino.json')
+  try {
+    const directory = dirname(filePath)
+
+    if (!existsSync(directory)) {
+      mkdirSync(directory, { recursive: true })
+    }
+
+    writeFileSync(filePath, config, 'utf8')
+
+    return true
+  } catch (err) {
+    console.log(err)
+    return false
+  }
+}
