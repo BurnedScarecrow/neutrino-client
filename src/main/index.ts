@@ -1,5 +1,6 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { ChildProcess, exec, spawn, execSync } from 'child_process'
+import axios from 'axios'
+import { ChildProcess, execSync, spawn } from 'child_process'
 import { BrowserWindow, app, ipcMain, shell } from 'electron'
 import Store from 'electron-store'
 import { existsSync, mkdirSync, writeFileSync } from 'fs'
@@ -34,6 +35,7 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
+    mainWindow.removeMenu()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -63,6 +65,28 @@ app.whenReady().then(() => {
 
   /* -------------------------------------------------------------------------- */
 
+  const hexDecode = function (hex) {
+    let j
+    const hexes = hex.match(/.{1,2}/g) || []
+    let back = ''
+    for (j = 0; j < hexes.length; j++) {
+      back += String.fromCharCode(parseInt(hexes[j], 16))
+    }
+
+    return back
+  }
+
+  function hostFromKey(key: string) {
+    const splitedKey = key.split(':')
+    const ipHex = splitedKey[0]
+    const ip64 = hexDecode(ipHex)
+    const ip = atob(ip64)
+    console.log(ip)
+    return ip
+  }
+
+  /* -------------------------------------------------------------------------- */
+
   ipcMain.on('servers:add', (event, newItem) => {
     console.log('ipcMain: on servers:add event handler got data', JSON.stringify(newItem))
 
@@ -72,6 +96,41 @@ app.whenReady().then(() => {
     const result = store.get(server?.name)
     console.log('result:', result)
     event.returnValue = result
+  })
+
+  ipcMain.on('servers:add-key', async (event, newItem) => {
+    console.log('ipcMain: on servers:add-key event handler got data', newItem)
+
+    const data = JSON.parse(newItem)
+
+    const host = data.hostname || hostFromKey(data.key)
+
+    try {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+      const response = await axios.post(`https://${host}/proxy/config`, { key: data.key })
+
+      if (response.status == 201) {
+        const config = {
+          server: host,
+          server_port: response.data.server_port,
+          password: response.data.password,
+          method: response.data.method
+        }
+
+        const server = { name: data.name, config }
+
+        store.set(server?.name, server?.config)
+        const result = store.get(server?.name)
+        console.log('errored:', response)
+        event.returnValue = result
+      } else {
+        console.log('auth key errored:', JSON.stringify(response))
+        event.returnValue = false
+      }
+    } catch (e) {
+      console.log('try failed')
+      event.returnValue = false
+    }
   })
 
   ipcMain.on('servers:list', (event) => {
@@ -170,12 +229,12 @@ function connect(event, config) {
   })
 
   childProcess.stdout?.on('data', (data) => {
-    console.log(`stdout: ${data}`)
+    // console.log(`stdout: ${data}`)
     event.sender.send('connection:log', data)
   })
 
   childProcess.stderr?.on('data', (data) => {
-    console.error(`stderr: ${data}`)
+    // console.error(`stderr: ${data}`)
     event.sender.send('connection:error', data)
   })
 }
@@ -199,7 +258,8 @@ function createConfigFile(config): boolean {
 
 function disconnect() {
   if (childProcess) {
-    childProcess.kill()
+    console.log('kill subprocess')
+    childProcess?.kill()
   }
 }
 

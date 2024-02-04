@@ -3,14 +3,18 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-
+const tab = ref('config')
 const name = ref('')
+
 const config = ref({
   server: '',
   server_port: '',
   method: '',
   password: ''
 })
+
+const authKey = ref('')
+const hostname = ref('')
 
 document.addEventListener('keydown', function (event) {
   if (event.key === 'Enter' && event.ctrlKey) {
@@ -21,14 +25,34 @@ document.addEventListener('keydown', function (event) {
 
 const errorServerExists = ref(false)
 const errorEmptyTitle = ref(false)
+const errorEmptyKey = ref(false)
 const errorIP = ref(false)
 const errorInvalidPort = ref(false)
 const errorNoMethod = ref(false)
 const errorNoPassword = ref(false)
+const errorGettingConfig = ref(false)
 
 function isValidIPv4Address(ipAddress) {
   const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/
   return ipv4Regex.test(ipAddress)
+}
+
+function checkFields2() {
+  name.value = name.value.trim()
+  authKey.value = authKey.value.trim()
+  if (name.value === '') {
+    errorEmptyTitle.value = true
+    return false
+  } else {
+    errorEmptyTitle.value = false
+  }
+  if (authKey.value === '') {
+    errorEmptyKey.value = true
+    return false
+  } else {
+    errorEmptyKey.value = false
+  }
+  return true
 }
 
 function checkFields() {
@@ -88,17 +112,38 @@ function checkFields() {
 }
 
 function save() {
-  if (!checkFields()) return
+  if (tab.value === 'config') {
+    if (!checkFields()) return
 
-  const data = {
-    name: name.value,
-    config: config.value
+    const data = {
+      name: name.value,
+      config: config.value
+    }
+    console.log('[vue]-> add server')
+    const result = window.api.addServer(JSON.stringify(data))
+    console.log(result)
+
+    if (result) router.push('/')
+  } else if (tab.value === 'auth-key') {
+    if (!checkFields2()) return
+
+    const key = authKey.value.trim()
+    console.log(key)
+
+    const data = {
+      name: name.value,
+      key,
+      hostname: hostname.value
+    }
+
+    console.log('[vue]-> add server key')
+    const result = window.api.addServerKey(JSON.stringify(data))
+    console.log(result)
+    if (result) router.push('/')
+    else if (result === false) {
+      errorGettingConfig.value = true
+    }
   }
-  console.log('[vue]-> add server')
-  const result = window.api.addServer(JSON.stringify(data))
-  console.log(result)
-
-  if (result) router.push('/')
 }
 </script>
 
@@ -124,26 +169,39 @@ function save() {
     <div class="title">Remote connection settings</div>
 
     <div class="tabs-row">
-      <div class="btn active">Raw config</div>
-      <div class="btn disabled">Auth key</div>
+      <div class="btn" :class="{ active: tab == 'config' }" @click="tab = 'config'">Raw config</div>
+      <div class="btn" :class="{ active: tab == 'auth-key' }" @click="tab = 'auth-key'">
+        Auth key
+      </div>
     </div>
 
-    <div class="socket-row">
-      <input v-model="config.server" type="text" placeholder="IP address" />
-      <input v-model="config.server_port" type="text" placeholder="Port" />
+    <div v-show="tab == 'config'" class="tab-content raw-config-tab">
+      <div class="socket-row">
+        <input v-model="config.server" type="text" placeholder="IP address" />
+        <input v-model="config.server_port" type="text" placeholder="Port" />
+      </div>
+
+      <select v-model="config.method" placeholder="Encription">
+        <option value="" disabled selected>Encryption method</option>
+        <option value="rc4-md5">rc4-md5</option>
+        <option value="aes-128-gcm">aes-128-gcm</option>
+        <option value="aes-192-gcm">aes-192-gcm</option>
+        <option value="aes-256-gcm">aes-256-gcm</option>
+        <option value="aes-256-cfb">aes-256-cfb</option>
+        <option value="chacha20-ietf-poly1305">chacha20-ietf-poly1305</option>
+      </select>
+
+      <input v-model="config.password" type="password" placeholder="Password" />
     </div>
 
-    <select v-model="config.method" placeholder="Encription">
-      <option value="" disabled selected>Encryption method</option>
-      <option value="rc4-md5">rc4-md5</option>
-      <option value="aes-128-gcm">aes-128-gcm</option>
-      <option value="aes-192-gcm">aes-192-gcm</option>
-      <option value="aes-256-gcm">aes-256-gcm</option>
-      <option value="aes-256-cfb">aes-256-cfb</option>
-      <option value="chacha20-ietf-poly1305">chacha20-ietf-poly1305</option>
-    </select>
-
-    <input v-model="config.password" type="password" placeholder="Password" />
+    <div v-show="tab == 'auth-key'" class="tab-content auth-key-tab">
+      <textarea v-model="authKey" placeholder="Paste access key" />
+      <input v-model="hostname" placeholder="Hostname (optional)" />
+      <p class="notion">
+        Enter "localhost" or another alias as a hostname if you have local-running proxy-server
+        (Container, Cluster, VM, etc.)
+      </p>
+    </div>
 
     <div class="err-row">
       <div v-if="errorEmptyTitle" class="error">Title is empty</div>
@@ -152,6 +210,10 @@ function save() {
       <div v-if="errorInvalidPort" class="error">Port is not valid</div>
       <div v-if="errorNoMethod" class="error">Choose encryption method</div>
       <div v-if="errorNoPassword" class="error">Enter password</div>
+      <div v-if="errorEmptyKey" class="error">Enter auth-key</div>
+      <div v-if="errorGettingConfig" class="error">
+        Failed to get config.<br />Check hostname and auth key.
+      </div>
     </div>
   </div>
 </template>
@@ -159,10 +221,21 @@ function save() {
 <style lang="less">
 @import '../assets/css/styles.less';
 
+.notion {
+  color: #dd6;
+  font-size: 0.9em;
+}
+
 .tabs-row {
   width: 100%;
   display: flex;
   justify-content: center;
+  gap: 15px;
+}
+
+.tab-content {
+  display: flex;
+  flex-direction: column;
   gap: 15px;
 }
 
@@ -183,7 +256,9 @@ function save() {
   background-color: var(--fail);
   padding: 5px 10px;
   border-radius: 10px;
-  height: 23px;
+  min-height: 23px;
+  text-align: center;
+  width: 90%;
   box-sizing: border-box;
 }
 

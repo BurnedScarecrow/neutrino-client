@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: electron-app
+appId: pro.evsikov.neutrino
+productName: Neutrino
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: electron-app
+  executableName: neutrino-client
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
@@ -29,12 +29,33 @@ mac:
 dmg:
   artifactName: ${name}-${version}.${ext}
 linux:
+  executableName: neutrino-client
+  desktop:
+    Name: Neutrino
+    Encoding: 'UTF-8'
+    StartupNotify: true
+    Terminal: false
+  icon: './build/icons'
   target:
     - AppImage
     - snap
     - deb
-  maintainer: electronjs.org
-  category: Utility
+  maintainer: evsikov.pro
+  category: Utility,System
+  synopsis: Shadowsocks GUI client and something more
+  executableArgs:
+    - '--no-sandbox'
+deb:
+  depends:
+    - shadowsocks-libev
+    - gconf2
+    - gconf-service
+    - libnotify4
+    - libappindicator1
+    - libxtst6
+    - libnss3
+    - python3
+    - nodejs
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false

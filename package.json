@@ -1,10 +1,10 @@
 {
   "name": "neutrino-client",
   "version": "1.0.0",
-  "description": "An Electron application with Vue and TypeScript",
+  "description": "Neutrino client application is a user-friendly GUI client for shadowsocks proxy. It provides safe, reliable and anonymous way to get access to any website. With this application you can use shadowsocks proxy servers all over the world using friendly interface without need of terminal knowledge. Neutrino application also has own server-side package that allows you to be connected with it via neutrino auth link-key without typing any complex configuration.",
   "main": "./out/main/index.js",
-  "author": "evsikov.pro",
-  "homepage": "https://www.electronjs.org",
+  "author": "Alexander Evsikov",
+  "homepage": "https://evsikov.pro",
   "module": "commonjs",
   "moduleResolution": "node",
   "scripts": {
@@ -24,6 +24,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "^2.0.0",
     "@electron-toolkit/utils": "^2.0.0",
+    "axios": "^1.6.2",
     "electron-store": "^8.1.0",
     "electron-updater": "^6.1.1",
     "vue-router": "^4.2.5"

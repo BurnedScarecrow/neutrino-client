@@ -16,6 +16,11 @@ function addServer(data) {
   return ipcRenderer.sendSync('servers:add', data)
 }
 
+function addServerKey(data) {
+  console.log('[preload] -> add server key')
+  return ipcRenderer.sendSync('servers:add-key', data)
+}
+
 function deleteServer(data) {
   console.log('[preload] -> delete server')
   ipcRenderer.send('servers:delete', data)
@@ -45,6 +50,7 @@ const api = {
   getServers,
   getServer,
   addServer,
+  addServerKey,
   deleteServer,
   connect,
   disconnect,

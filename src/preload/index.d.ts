@@ -7,6 +7,7 @@ declare global {
       getServers: () => void
       getServer: (string) => any
       addServer: (any) => any
+      addServerKey: (any) => any
       deleteServer: (any) => void
       connect: (any) => any
       disconnect: () => any

@@ -5,8 +5,8 @@ import { useRoute } from 'vue-router'
 const connected = ref(false)
 const errorMessage = ref('')
 
-const logs = ref('')
-const errors = ref('')
+const logs = ref(new Array<string>())
+const errors = ref(new Array<string>())
 
 const route = useRoute()
 console.log(route.query)
@@ -15,15 +15,25 @@ const name = ref(route.query.name)
 const local_port = ref('1080')
 
 const printErrors = (_, str) => {
-  console.log('GOT ERR', str)
-  errors.value += String.fromCharCode.apply(null, str)
-  errors.value += '\n'
+  const err = String.fromCharCode.apply(null, str)
+  const insertion = err.trim()
+  errors.value.push(insertion)
+  const errorWindow = document.getElementById('errorWindow')
+  if (errorWindow !== null) {
+    errorWindow.scrollTop = 9999
+  }
 }
 
 const printLogs = (_, str) => {
-  console.log('GOT LOGS', str)
-  logs.value += String.fromCharCode.apply(null, str)
-  logs.value += '\n'
+  const log = String.fromCharCode.apply(null, str)
+  if (log.search('connect to') > 0) {
+    const insertion = log.split('connect to')[1].split(':')[0].trim()
+    logs.value.push(insertion)
+    const logWindow = document.getElementById('logWindow')
+    if (logWindow !== null) {
+      logWindow.scrollTop = 9999
+    }
+  }
 }
 
 onMounted(() => {
@@ -35,8 +45,8 @@ onMounted(() => {
 function connect() {
   if (connected.value === true) {
     window.api.disconnect()
-    logs.value = ''
-    errors.value = ''
+    logs.value = []
+    errors.value = []
   } else {
     const portReady = window.api.isPortReady(local_port.value)
     if (!portReady) {
@@ -138,26 +148,73 @@ function connect() {
         {{ errorMessage }}
       </div>
     </footer>
-    <section class="logWingow" v-show="connected">
-      {{ logs }}
-    </section>
-    <section class="logWingow" v-show="connected">
-      {{ errors }}
-    </section>
+    <div class="logs-row" v-show="connected">
+      <div class="log-counter">
+        <span>
+          {{ logs.length }}
+        </span>
+        <span>connections</span>
+      </div>
+      <section class="logWindow" id="logWindow">
+        <span v-for="(log, i) in logs" :key="i">{{ log }}</span>
+      </section>
+    </div>
+    <div class="logs-row" v-show="connected">
+      <div class="log-counter">
+        <span>
+          {{ errors.length }}
+        </span>
+        <span>errors</span>
+      </div>
+      <section class="logWindow" id="errorWindow">
+        <span v-for="(err, i) in errors" :key="i">{{ err }}</span>
+      </section>
+    </div>
   </div>
 </template>
 
 <style lang="less">
 @import '../assets/css/styles.less';
 
-.logWingow {
-  width: 250px;
+.logs-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .log-counter {
+    height: 50px;
+    width: 70px;
+    font-size: 0.8em;
+    display: flex;
+    box-sizing: border-box;
+    flex-direction: column;
+    justify-content: center;
+    border: 1px solid var(--dark);
+    border-radius: 7px;
+    padding: 8px;
+
+    span {
+      text-align: center;
+
+      &:first-child {
+        font-size: 2em;
+      }
+    }
+  }
+}
+
+.logWindow {
+  display: flex;
+  flex-direction: column;
+  width: 170px;
   overflow: auto;
   height: 45px;
   background: var(--dark);
   font-family: 'Courier New';
   font-size: 9px;
-  padding: 3px;
+  padding: 3px 8px;
+  border-radius: 7px;
+  box-sizing: border-box;
 }
 
 .error {

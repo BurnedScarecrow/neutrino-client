@@ -22,6 +22,8 @@ $ npm run dev
 
 ### Build
 
+> use `sudo`
+
 ```bash
 # For windows
 $ npm run build:win
